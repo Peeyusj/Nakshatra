@@ -1,7 +1,6 @@
 // src/components/ui/RashiCard.tsx
 import { motion, type Variants } from "motion/react";
 import type { Rashi } from "@/types";
-import { MoonStar } from "lucide-react"; // Swapping Sparkles for a more astrological icon
 import { RashiIcon } from "./RashiIcon";
 
 interface RashiCardProps {
