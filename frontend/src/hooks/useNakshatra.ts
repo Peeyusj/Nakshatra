@@ -3,8 +3,6 @@ import { useState } from 'react';
 import axios from 'axios';
 import type { GenerateResponse, HealthResponse } from '@/types';
 
-// Assuming your FastAPI server is running here
-const API_BASE_URL = 'http://localhost:8000';
 
 export function useNakshatra() {
   const [isFetching, setIsFetching] = useState(false);
@@ -14,7 +12,7 @@ export function useNakshatra() {
   // Optional: A quick check to see if the model is loaded in the backend
   const checkHealth = async () => {
     try {
-      const res = await axios.get<HealthResponse>(`${API_BASE_URL}/health`);
+      const res = await axios.get<HealthResponse>(`${import.meta.env.VITE_API_BASE_URL}/health`);
       return res.data.status === 'ok';
     } catch {
       return false;
@@ -29,8 +27,8 @@ export function useNakshatra() {
     try {
       // If the user selected a specific syllable (not "any"), append it to the query
       const url = startSyllable && startSyllable !== 'any' 
-        ? `${API_BASE_URL}/generate?start=${startSyllable}` 
-        : `${API_BASE_URL}/generate`;
+        ? `${import.meta.env.VITE_API_BASE_URL}/generate?start=${startSyllable}` 
+        : `${import.meta.env.VITE_API_BASE_URL}/generate`;
 
       const response = await axios.get<GenerateResponse>(url);
       setGenerationData(response.data);
@@ -38,7 +36,7 @@ export function useNakshatra() {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message === 'Network Error' 
-          ? 'Cannot connect to backend. Is FastAPI running on port 8000?' 
+          ? `Cannot connect to backend. Is FastAPI running at ${import.meta.env.VITE_API_BASE_URL}?` 
           : err.response?.data?.detail || 'An error occurred during generation.');
       } else {
         setError('An unexpected error occurred.');
