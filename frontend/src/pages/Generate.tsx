@@ -23,10 +23,16 @@ export default function Generate() {
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
   const [isTyping, setIsTyping] = useState(false);
 
-  // Auto-scroll the trace history
+// Auto-scroll the trace history
   const traceEndRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    traceEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Only scroll if the WaveNet engine has actually started typing
+    if (currentStepIndex >= 0) {
+      traceEndRef.current?.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "nearest" // Prevents the whole browser window from jumping down
+      });
+    }
   }, [currentStepIndex]);
 
   // Native Text-to-Speech
@@ -41,11 +47,14 @@ export default function Generate() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     if (generationData && generationData.steps.length > 0) {
-      const totalLength = generationData.name.length;
-      const stepsLength = generationData.steps.length;
-      const actualPrefix = generationData.name.substring(0, totalLength - stepsLength).toUpperCase();
+      // 1. Find out how many actual letters were generated (ignore the '.' token)
+      const generatedCharsCount = generationData.steps.filter(step => step.chosen !== '.').length;
+      
+      // 2. Subtract that from the total name length to get the exact prefix
+      const prefixLength = generationData.name.length - generatedCharsCount;
+      const actualPrefix = generationData.name.substring(0, prefixLength).toUpperCase();
       
       setDisplayedText(actualPrefix); 
       setCurrentStepIndex(0); 
@@ -218,14 +227,18 @@ export default function Generate() {
                     </AnimatePresence>
 
                     {/* The Main Text + Speak Button */}
-                    <div className="relative flex items-center justify-center group">
+                    <div className="relative flex items-center justify-center group mb-8 md:mb-0">
+                      
                       <motion.h1 
                         animate={{ scale: isTyping ? 1 : 1.05, color: isTyping ? "hsl(var(--foreground))" : "hsl(var(--primary))" }}
                         transition={{ duration: 0.6, ease: "circOut" }}
-                        className={`text-5xl md:text-7xl font-bold tracking-[0.15em] uppercase whitespace-nowrap px-4 transition-shadow ${isTyping ? '' : 'drop-shadow-[0_0_40px_rgba(200,150,50,0.3)]'}`}
+                        // 1. Made text highly responsive: 3xl -> 5xl -> 7xl
+                        // 2. Reduced letter tracking slightly on mobile to save space
+                        className={`text-3xl sm:text-5xl md:text-7xl font-bold tracking-[0.1em] md:tracking-[0.15em] uppercase whitespace-nowrap px-4 transition-shadow ${isTyping ? '' : 'drop-shadow-[0_0_40px_rgba(200,150,50,0.3)]'}`}
                       >
                         {displayedText}
-                        <span className={`inline-block w-1 md:w-2 h-10 md:h-14 bg-primary ml-3 align-middle transition-opacity ${isTyping ? 'animate-pulse opacity-100' : 'opacity-0 hidden'}`} />
+                        {/* Adjusted cursor height to scale with the text size */}
+                        <span className={`inline-block w-1 md:w-2 h-8 sm:h-10 md:h-14 bg-primary ml-2 md:ml-3 align-middle transition-opacity ${isTyping ? 'animate-pulse opacity-100' : 'opacity-0 hidden'}`} />
                       </motion.h1>
                       
                       {/* VOICE BUTTON (Only appears when done) */}
@@ -236,10 +249,12 @@ export default function Generate() {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => speakName(generationData.name)}
-                          className="absolute -right-16 top-1/2 -translate-y-1/2 text-primary/70 hover:text-primary transition-colors p-2"
+                          // CHANGED: Position below text on mobile (-bottom-12), right of text on desktop (md:-right-16)
+                          className="absolute -bottom-12 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:-right-16 text-primary/70 hover:text-primary transition-colors p-2"
                           title="Pronounce Name"
                         >
-                          <Volume2 className="h-8 w-8 drop-shadow-[0_0_10px_rgba(200,150,50,0.5)]" />
+                          {/* Shrunk the icon slightly on mobile */}
+                          <Volume2 className="h-6 w-6 md:h-8 md:w-8 drop-shadow-[0_0_10px_rgba(200,150,50,0.5)]" />
                         </motion.button>
                       )}
                     </div>
