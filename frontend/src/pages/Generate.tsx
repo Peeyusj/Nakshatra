@@ -49,7 +49,7 @@ export default function Generate() {
 
 useEffect(() => {
     if (generationData && generationData.steps.length > 0) {
-      // 1. Find out how many actual letters were generated (ignore the '.' token)
+      // 1. Find out how many actual letters were generated (ignore the '.' token) 🤞
       const generatedCharsCount = generationData.steps.filter(step => step.chosen !== '.').length;
       
       // 2. Subtract that from the total name length to get the exact prefix
